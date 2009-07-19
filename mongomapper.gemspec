@@ -2,11 +2,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{mongomapper}
-  s.version = "0.2.0"
+  s.version = "0.3.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["John Nunemaker"]
-  s.date = %q{2009-07-07}
+  s.date = %q{2009-07-19}
   s.email = %q{nunemaker@gmail.com}
   s.extra_rdoc_files = [
     "LICENSE",
@@ -27,6 +27,7 @@ Gem::Specification.new do |s|
      "lib/mongomapper/associations/has_many_embedded_proxy.rb",
      "lib/mongomapper/associations/has_many_proxy.rb",
      "lib/mongomapper/associations/polymorphic_belongs_to_proxy.rb",
+     "lib/mongomapper/associations/polymorphic_has_many_embedded_proxy.rb",
      "lib/mongomapper/associations/proxy.rb",
      "lib/mongomapper/callbacks.rb",
      "lib/mongomapper/document.rb",
@@ -34,6 +35,7 @@ Gem::Specification.new do |s|
      "lib/mongomapper/finder_options.rb",
      "lib/mongomapper/key.rb",
      "lib/mongomapper/observing.rb",
+     "lib/mongomapper/pagination.rb",
      "lib/mongomapper/rails_compatibility.rb",
      "lib/mongomapper/save_with_validation.rb",
      "lib/mongomapper/serialization.rb",
@@ -50,16 +52,16 @@ Gem::Specification.new do |s|
      "test/test_key.rb",
      "test/test_mongomapper.rb",
      "test/test_observing.rb",
+     "test/test_pagination.rb",
      "test/test_rails_compatibility.rb",
      "test/test_serializations.rb",
      "test/test_validations.rb"
   ]
-  s.has_rdoc = true
   s.homepage = %q{http://github.com/jnunemaker/mongomapper}
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubyforge_project = %q{mongomapper}
-  s.rubygems_version = %q{1.3.1}
+  s.rubygems_version = %q{1.3.3}
   s.summary = %q{Awesome gem for modeling your domain and storing it in mongo}
   s.test_files = [
     "test/serializers/test_json_serializer.rb",
@@ -72,6 +74,7 @@ Gem::Specification.new do |s|
      "test/test_key.rb",
      "test/test_mongomapper.rb",
      "test/test_observing.rb",
+     "test/test_pagination.rb",
      "test/test_rails_compatibility.rb",
      "test/test_serializations.rb",
      "test/test_validations.rb"
@@ -79,7 +82,7 @@ Gem::Specification.new do |s|
 
   if s.respond_to? :specification_version then
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
-    s.specification_version = 2
+    s.specification_version = 3
 
     if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<activesupport>, [">= 0"])
