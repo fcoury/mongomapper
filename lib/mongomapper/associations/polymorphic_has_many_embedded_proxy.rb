@@ -22,6 +22,7 @@ module MongoMapper
         (@_values || []).map do |e|
           ref_type = "#{@association.name}_type"
           class_name = e[ref_type]
+          
           if class_name
             current = Kernel
             parts = class_name.split("::")
@@ -32,6 +33,7 @@ module MongoMapper
           else
             @association.klass
           end
+
           klass.new(e)
         end
       end
