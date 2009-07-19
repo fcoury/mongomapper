@@ -33,10 +33,125 @@ class Person
   key :child, Person
 end
 
+class Media
+  include MongoMapper::EmbeddedDocument
+  key :file, String
+end
+
+class Video < Media
+  key :length, Integer
+end
+
+class Image < Media
+  key :width, Integer
+  key :height, Integer
+end
+
+class Music < Media
+  key :bitrate, String
+end
+
+class Catalog
+  include MongoMapper::Document
+  
+  many :medias, :polymorphic => true
+end
+
 class AssociationsTest < Test::Unit::TestCase
   def setup
     Project.collection.clear
     Status.collection.clear
+  end
+  
+  context "Polymorphic Many" do
+    should "default reader to empty array" do
+      catalog = Catalog.new
+      catalog.medias.should == []
+    end
+
+    should "allow adding to association like it was an array" do
+      catalog = Catalog.new
+      catalog.medias << Video.new
+      catalog.medias.push Video.new
+      catalog.medias.size.should == 2
+    end
+
+    should "store the association" do
+      catalog = Catalog.new
+      catalog.medias = [Video.new("file" => "video.mpg", "length" => 3600)]
+      catalog.save.should be_true
+
+      from_db = Catalog.find(catalog.id)
+      from_db.medias.size.should == 1
+      from_db.medias[0].file.should == "video.mpg"
+    end
+
+    should "store different associations" do
+      catalog = Catalog.new
+      catalog.medias = [
+        Video.new("file" => "video.mpg", "length" => 3600),
+        Music.new("file" => "music.mp3", "bitrate" => "128kbps"),
+        Image.new("file" => "image.png", "width" => 800, "height" => 600)
+      ]
+      catalog.save.should be_true
+
+      from_db = Catalog.find(catalog.id)
+      from_db.medias.size.should == 3
+      from_db.medias[0].file.should == "video.mpg"
+      from_db.medias[0].length.should == 3600
+      from_db.medias[1].file.should == "music.mp3"
+      from_db.medias[1].bitrate.should == "128kbps"
+      from_db.medias[2].file.should == "image.png"
+      from_db.medias[2].width.should == 800
+      from_db.medias[2].height.should == 600
+    end
+  end
+
+  context "Many embedded documents" do
+    should "default reader to empty array" do
+      project = Project.new
+      project.addresses.should == []
+    end
+
+    should "allow adding to association like it was an array" do
+      project = Project.new
+      project.addresses << Address.new
+      project.addresses.push Address.new
+      project.addresses.size.should == 2
+    end
+
+    should "be embedded in document on save" do
+      sb = Address.new(:city => 'South Bend', :state => 'IN')
+      chi = Address.new(:city => 'Chicago', :state => 'IL')
+      project = Project.new
+      project.addresses << sb
+      project.addresses << chi
+      project.save
+
+      from_db = Project.find(project.id)
+      from_db.addresses.size.should == 2
+      from_db.addresses[0].should == sb
+      from_db.addresses[1].should == chi
+    end
+
+    should "allow embedding arbitrarily deep" do
+      @document = Class.new do
+        include MongoMapper::Document
+        key :person, Person
+      end
+
+      meg = Person.new(:name => "Meg")
+      meg.child = Person.new(:name => "Steve")
+      meg.child.child = Person.new(:name => "Linda")
+
+      doc = @document.new(:person => meg)
+      doc.save
+
+      from_db = @document.find(doc.id)
+      from_db.person.name.should == 'Meg'
+      from_db.person.child.name.should == 'Steve'
+      from_db.person.child.child.name.should == 'Linda'
+    end
   end
 
   context "Polymorphic Belongs To" do
