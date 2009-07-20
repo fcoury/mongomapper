@@ -18,25 +18,25 @@ module MongoMapper
       end
 
       protected
-      def find_target
-        (@_values || []).map do |e|
-          ref_type = "#{@association.name}_type"
-          class_name = e[ref_type]
+        def find_target
+          (@_values || []).map do |e|
+            ref_type = "#{@association.name}_type"
+            class_name = e[ref_type]
           
-          if class_name
-            current = Kernel
-            parts = class_name.split("::")
-            parts.each do |p|
-              current = current.const_get(p)
+            if class_name
+              current = Kernel
+              parts = class_name.split("::")
+              parts.each do |p|
+                current = current.const_get(p)
+              end
+              klass = current
+            else
+              @association.klass
             end
-            klass = current
-          else
-            @association.klass
+          
+            klass.new(e)
           end
-
-          klass.new(e)
         end
-      end
     end
   end
 end

@@ -189,53 +189,6 @@ class AssociationsTest < Test::Unit::TestCase
     end
   end
 
-  context "Many embedded documents" do
-    should "default reader to empty array" do
-      project = Project.new
-      project.addresses.should == []
-    end
-
-    should "allow adding to association like it was an array" do
-      project = Project.new
-      project.addresses << Address.new
-      project.addresses.push Address.new
-      project.addresses.size.should == 2
-    end
-
-    should "be embedded in document on save" do
-      sb = Address.new(:city => 'South Bend', :state => 'IN')
-      chi = Address.new(:city => 'Chicago', :state => 'IL')
-      project = Project.new
-      project.addresses << sb
-      project.addresses << chi
-      project.save
-
-      from_db = Project.find(project.id)
-      from_db.addresses.size.should == 2
-      from_db.addresses[0].should == sb
-      from_db.addresses[1].should == chi
-    end
-
-    should "allow embedding arbitrarily deep" do
-      @document = Class.new do
-        include MongoMapper::Document
-        key :person, Person
-      end
-
-      meg = Person.new(:name => "Meg")
-      meg.child = Person.new(:name => "Steve")
-      meg.child.child = Person.new(:name => "Linda")
-
-      doc = @document.new(:person => meg)
-      doc.save
-
-      from_db = @document.find(doc.id)
-      from_db.person.name.should == 'Meg'
-      from_db.person.child.name.should == 'Steve'
-      from_db.person.child.child.name.should == 'Linda'
-    end
-  end
-
   context "Polymorphic Belongs To" do
     should "default to nil" do
       status = Status.new
