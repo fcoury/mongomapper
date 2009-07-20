@@ -92,6 +92,12 @@ module TrModels
     include MongoMapper::Document
     many :transports, :polymorphic => true, :class_name => "TrModels::Transport"
     key :name, String
+
+    def transport_attributes=(transport_attributes)
+      transport_attributes.each do |attributes|
+        transports << eval(attributes["transports_type"]).new(attributes)
+      end
+    end
   end
 end
 
@@ -102,6 +108,28 @@ class AssociationsTest < Test::Unit::TestCase
   end
   
   context "Nested Polymorphic Many" do
+    should "set associations correctly" do
+      fleet_attributes = { 
+        "name" => "My Fleet", 
+        "transport_attributes" => [
+          {"transports_type" => "TrModels::Car", "license_plate" => "ABC123", "model" => "VW Golf", "year" => 2001}, 
+          {"transports_type" => "TrModels::Car", "license_plate" => "DEF123", "model" => "Honda Accord", "year" => 2008},
+          {"transports_type" => "TrModels::Ambulance", "license_plate" => "GGG123", "icu" => true}
+        ] 
+      }
+      
+      fleet = TrModels::Fleet.new(fleet_attributes)
+      fleet.transports.size.should == 3
+      fleet.transports[0].license_plate.should == "ABC123"
+      fleet.transports[0].model.should == "VW Golf"
+      fleet.transports[0].year.should == 2001
+      fleet.transports[1].license_plate.should == "DEF123"
+      fleet.transports[1].model.should == "Honda Accord"
+      fleet.transports[1].year.should == 2008      
+      fleet.transports[2].license_plate.should == "GGG123"
+      fleet.transports[2].icu.should be_true
+    end
+    
     should "default reader to empty array" do
       fleet = TrModels::Fleet.new
       fleet.transports.should == []
