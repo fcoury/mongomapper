@@ -27,12 +27,27 @@ class Status
   key :name, String
 end
 
+class RealPerson
+  include MongoMapper::Document
+  many :pets
+  
+  key :name, String
+  
+  def pets_attributes=(pets_attributes)
+    self.pets = []
+    pets_attributes.each do |attributes|
+      self.pets << Pet.new(attributes)
+    end
+  end
+end
+
 class Person
   include MongoMapper::EmbeddedDocument
   key :name, String
   key :child, Person
   
   many :pets
+
 end
 
 class Pet
@@ -94,8 +109,9 @@ module TrModels
     key :name, String
 
     def transport_attributes=(transport_attributes)
+      self.transports = []
       transport_attributes.each do |attributes|
-        transports << eval(attributes["transports_type"]).new(attributes)
+        self.transports << eval(attributes["transports_type"]).new(attributes)
       end
     end
   end
@@ -112,22 +128,37 @@ class AssociationsTest < Test::Unit::TestCase
       fleet_attributes = { 
         "name" => "My Fleet", 
         "transport_attributes" => [
+          {"transports_type" => "TrModels::Ambulance", "license_plate" => "GGG123", "icu" => true},
           {"transports_type" => "TrModels::Car", "license_plate" => "ABC123", "model" => "VW Golf", "year" => 2001}, 
           {"transports_type" => "TrModels::Car", "license_plate" => "DEF123", "model" => "Honda Accord", "year" => 2008},
-          {"transports_type" => "TrModels::Ambulance", "license_plate" => "GGG123", "icu" => true}
         ] 
       }
       
       fleet = TrModels::Fleet.new(fleet_attributes)
       fleet.transports.size.should == 3
-      fleet.transports[0].license_plate.should == "ABC123"
-      fleet.transports[0].model.should == "VW Golf"
-      fleet.transports[0].year.should == 2001
-      fleet.transports[1].license_plate.should == "DEF123"
-      fleet.transports[1].model.should == "Honda Accord"
-      fleet.transports[1].year.should == 2008      
-      fleet.transports[2].license_plate.should == "GGG123"
-      fleet.transports[2].icu.should be_true
+      fleet.transports[0].class.should == TrModels::Ambulance
+      fleet.transports[0].license_plate.should == "GGG123"
+      fleet.transports[0].icu.should be_true
+      fleet.transports[1].class.should == TrModels::Car
+      fleet.transports[1].license_plate.should == "ABC123"
+      fleet.transports[1].model.should == "VW Golf"
+      fleet.transports[1].year.should == 2001
+      fleet.transports[2].class.should == TrModels::Car
+      fleet.transports[2].license_plate.should == "DEF123"
+      fleet.transports[2].model.should == "Honda Accord"
+      fleet.transports[2].year.should == 2008      
+      fleet.save.should be_true
+
+      from_db = TrModels::Fleet.find(fleet.id)
+      from_db.transports.size.should == 3
+      from_db.transports[0].license_plate.should == "GGG123"
+      from_db.transports[0].icu.should be_true
+      from_db.transports[1].license_plate.should == "ABC123"
+      from_db.transports[1].model.should == "VW Golf"
+      from_db.transports[1].year.should == 2001
+      from_db.transports[2].license_plate.should == "DEF123"
+      from_db.transports[2].model.should == "Honda Accord"
+      from_db.transports[2].year.should == 2008      
     end
     
     should "default reader to empty array" do
@@ -280,6 +311,17 @@ class AssociationsTest < Test::Unit::TestCase
   end
 
   context "Many documents" do
+    should "set children documents" do
+      fleet_attributes = { 
+        "name" => "My Project", 
+        "statuses_attributes" => [
+          {"status" => "Ready", "license_plate" => "GGG123", "icu" => true},
+          {"transports_type" => "ACar", "license_plate" => "ABC123", "model" => "VW Golf", "year" => 2001}, 
+          {"transports_type" => "TrModels::Car", "license_plate" => "DEF123", "model" => "Honda Accord", "year" => 2008},
+        ] 
+      }
+    end
+    
     should "default reader to empty array" do
       project = Project.new
       project.statuses.should == []
@@ -304,11 +346,6 @@ class AssociationsTest < Test::Unit::TestCase
   end
 
   context "Many embedded documents" do
-    should "default reader to empty array" do
-      project = Project.new
-      project.addresses.should == []
-    end
-
     should "allow adding to association like it was an array" do
       project = Project.new
       project.addresses << Address.new
@@ -347,6 +384,31 @@ class AssociationsTest < Test::Unit::TestCase
       from_db.person.name.should == 'Meg'
       from_db.person.child.name.should == 'Steve'
       from_db.person.child.child.name.should == 'Linda'
+    end
+    
+    should "allow assignment of 'many' embedded documents using a hash" do
+      person_attributes = { 
+        "name" => "Mr. Pet Lover", 
+        "pets_attributes" => [
+          {"name" => "Jimmy", "species" => "Cocker Spainel"},
+          {"name" => "Sasha", "species" => "Siberian Husky"}, 
+        ] 
+      }
+      
+      pet_lover = RealPerson.new(person_attributes)
+      pet_lover.name.should == "Mr. Pet Lover"
+      pet_lover.pets[0].name.should == "Jimmy"
+      pet_lover.pets[0].species.should == "Cocker Spainel"
+      pet_lover.pets[1].name.should == "Sasha"
+      pet_lover.pets[1].species.should == "Siberian Husky"
+      pet_lover.save.should be_true
+      
+      from_db = RealPerson.find(pet_lover.id)
+      from_db.name.should == "Mr. Pet Lover"
+      from_db.pets[0].name.should == "Jimmy"
+      from_db.pets[0].species.should == "Cocker Spainel"
+      from_db.pets[1].name.should == "Sasha"
+      from_db.pets[1].species.should == "Siberian Husky"
     end
     
     should "allow saving embedded documents in 'many' embedded documents" do
