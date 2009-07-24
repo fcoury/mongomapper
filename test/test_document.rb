@@ -55,6 +55,13 @@ class DocumentTest < Test::Unit::TestCase
       @document.keys['age'].name.should == 'age'
       @document.keys['age'].type.should == Integer
     end
+    
+    should "allow redefining a key" do
+      @document.key(:foo, String)
+      @document.keys['foo'].type.should == String
+      @document.key(:foo, Integer)
+      @document.keys['foo'].type.should == Integer
+    end
 
     should "use default database by default" do
       @document.database.should == MongoMapper.database
