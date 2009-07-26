@@ -65,8 +65,8 @@ class EmbeddedDocumentTest < Test::Unit::TestCase
     end
 
     should "be recorded" do
-      Grandparent.subclasses.sort.should == ['Child', 'Parent']
-      Parent.subclasses.sort.should      == ['Child']
+      Grandparent.subclasses.sort.should == [Parent]
+      Parent.subclasses.sort.should      == [Child]
     end    
   end
 
