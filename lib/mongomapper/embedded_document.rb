@@ -15,18 +15,18 @@ module MongoMapper
         include EmbeddedDocumentRailsCompatibility
         include Validatable
         include Serialization
-        
-        def inherited(subclass)
-          (@subclasses ||= []) << subclass
-        end
-
-        def subclasses
-          @subclasses
-        end
       end
     end
 
     module ClassMethods
+      def inherited(subclass)
+        (@subclasses ||= []) << subclass
+      end
+
+      def subclasses
+        @subclasses || []
+      end
+
       def keys
         @keys ||= if parent = parent_model
           parent.keys.dup
@@ -50,7 +50,7 @@ module MongoMapper
         return if subclasses.blank?
         
         subclasses.each do |subclass|
-          subclass.constantize.key name, type, options
+          subclass.key name, type, options
         end
       end
 
