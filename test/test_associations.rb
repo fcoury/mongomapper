@@ -2,7 +2,6 @@ require 'test_helper'
 
 class Address
   include MongoMapper::EmbeddedDocument
-
   key :address, String
   key :city,    String
   key :state,   String
@@ -11,48 +10,33 @@ end
 
 class Project
   include MongoMapper::Document
-
   key :name, String
-
   many :statuses
   many :addresses
 end
 
 class Status
   include MongoMapper::Document
-
   belongs_to :project
   belongs_to :target, :polymorphic => true
-
   key :name, String
 end
 
 class RealPerson
   include MongoMapper::Document
-  many :pets
-  
+  many :pets  
   key :name, String
-  
-  def pets_attributes=(pets_attributes)
-    self.pets = []
-    pets_attributes.each do |attributes|
-      self.pets << Pet.new(attributes)
-    end
-  end
 end
 
 class Person
   include MongoMapper::EmbeddedDocument
   key :name, String
   key :child, Person
-  
   many :pets
-
 end
 
 class Pet
   include MongoMapper::EmbeddedDocument
-  
   key :name, String
   key :species, String
 end
@@ -77,7 +61,6 @@ end
 
 class Catalog
   include MongoMapper::Document
-  
   many :medias, :polymorphic => true
 end
 
@@ -106,14 +89,7 @@ module TrModels
   class Fleet
     include MongoMapper::Document
     many :transports, :polymorphic => true, :class_name => "TrModels::Transport"
-    key :name, String
-    
-    def transport_attributes=(transport_attributes)
-      self.transports = []
-      transport_attributes.each do |attributes|
-        self.transports << attributes["_type"].constantize.new(attributes)
-      end
-    end
+    key :name, String    
   end
 end
 
@@ -125,11 +101,11 @@ class AssociationsTest < Test::Unit::TestCase
     TrModels::Fleet.collection.clear
   end
   
-  context "Nested Polymorphic Many" do
+  context "Modularized Polymorphic Many Embedded" do
     should "set associations correctly" do
       fleet_attributes = { 
         "name" => "My Fleet", 
-        "transport_attributes" => [
+        "transports" => [
           {"_type" => "TrModels::Ambulance", "license_plate" => "GGG123", "icu" => true},
           {"_type" => "TrModels::Car", "license_plate" => "ABC123", "model" => "VW Golf", "year" => 2001}, 
           {"_type" => "TrModels::Car", "license_plate" => "DEF123", "model" => "Honda Accord", "year" => 2008},
@@ -150,7 +126,7 @@ class AssociationsTest < Test::Unit::TestCase
       fleet.transports[2].model.should == "Honda Accord"
       fleet.transports[2].year.should == 2008      
       fleet.save.should be_true
-
+      
       from_db = TrModels::Fleet.find(fleet.id)
       from_db.transports.size.should == 3
       from_db.transports[0].license_plate.should == "GGG123"
@@ -206,7 +182,7 @@ class AssociationsTest < Test::Unit::TestCase
     end
   end
 
-  context "Polymorphic Many" do
+  context "Polymorphic Many Embedded" do
     should "default reader to empty array" do
       catalog = Catalog.new
       catalog.medias.should == []
@@ -229,7 +205,7 @@ class AssociationsTest < Test::Unit::TestCase
       from_db.medias[0].file.should == "video.mpg"
     end
   
-    should "store different associations" do
+    should "store different associations" do      
       catalog = Catalog.new
       catalog.medias = [
         Video.new("file" => "video.mpg", "length" => 3600),
@@ -237,7 +213,7 @@ class AssociationsTest < Test::Unit::TestCase
         Image.new("file" => "image.png", "width" => 800, "height" => 600)
       ]
       catalog.save.should be_true
-  
+      
       from_db = Catalog.find(catalog.id)
       from_db.medias.size.should == 3
       from_db.medias[0].file.should == "video.mpg"
@@ -312,18 +288,7 @@ class AssociationsTest < Test::Unit::TestCase
     end
   end
   
-  context "Many documents" do
-    should "set children documents" do
-      fleet_attributes = { 
-        "name" => "My Project", 
-        "statuses_attributes" => [
-          {"status" => "Ready", "license_plate" => "GGG123", "icu" => true},
-          {"_type" => "ACar", "license_plate" => "ABC123", "model" => "VW Golf", "year" => 2001}, 
-          {"_type" => "TrModels::Car", "license_plate" => "DEF123", "model" => "Honda Accord", "year" => 2008},
-        ] 
-      }
-    end
-    
+  context "Many documents" do    
     should "default reader to empty array" do
       project = Project.new
       project.statuses.should == []
@@ -391,7 +356,7 @@ class AssociationsTest < Test::Unit::TestCase
     should "allow assignment of 'many' embedded documents using a hash" do
       person_attributes = { 
         "name" => "Mr. Pet Lover", 
-        "pets_attributes" => [
+        "pets" => [
           {"name" => "Jimmy", "species" => "Cocker Spainel"},
           {"name" => "Sasha", "species" => "Siberian Husky"}, 
         ] 
@@ -416,7 +381,6 @@ class AssociationsTest < Test::Unit::TestCase
     should "allow saving embedded documents in 'many' embedded documents" do
       @document = Class.new do
         include MongoMapper::Document
-        
         many :people
       end
       
