@@ -10,7 +10,6 @@ module MongoMapper
       def initialize(owner, association)
         @owner= owner
         @association = association
-
         reset
       end
 
@@ -59,7 +58,9 @@ module MongoMapper
         # Array#flatten has problems with recursive arrays. Going one level
         # deeper solves the majority of the problems.
         def flatten_deeper(array)
-          array.collect { |element| (element.respond_to?(:flatten) && !element.is_a?(Hash)) ? element.flatten : element }.flatten
+          array.collect do |element|
+            (element.respond_to?(:flatten) && !element.is_a?(Hash)) ? element.flatten : element
+          end.flatten
         end
     end
   end
