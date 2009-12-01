@@ -33,11 +33,15 @@ module MongoMapper #:nodoc:
       def serializable_names
         serializable_key_names + serializable_method_names
       end
-
+      
       def serializable_record
         returning(serializable_record = {}) do
           serializable_names.each do |name|
-            serializable_record[name] = (name==:id ? @record.send(name).to_s : @record.send(name))
+            if (record = @record.send(name)).is_a?(ObjectId)
+              serializable_record[name] = record.to_s
+            else
+              serializable_record[name] = record
+            end
           end
         end
       end

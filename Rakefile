@@ -5,11 +5,11 @@ require 'yard'
 require 'yard/rake/yardoc_task'
 
 Jeweler::Tasks.new do |gem|
-  gem.name        = "mongo_mapper"
+  gem.name        = "webbynode-mongo_mapper"
   gem.summary     = %Q{Awesome gem for modeling your domain and storing it in mongo}
   gem.email       = "nunemaker@gmail.com"
   gem.homepage    = "http://github.com/jnunemaker/mongomapper"
-  gem.authors     = ["John Nunemaker"]
+  gem.authors     = ["John Nunemaker", "Felipe Coury"]
   
   gem.add_dependency('activesupport', '>= 2.3')
   gem.add_dependency('mongo', '0.17.1')
